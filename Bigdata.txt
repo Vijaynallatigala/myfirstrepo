@@ -1,0 +1,430 @@
+going to one step above and one step below is Relative Path.
+
+for Absoulte Path you should give full path
+eg: /home/zeyo2/zeyo22
+
+
+
+hadoop dfsadmin -safemode leave
+
+
+putty hostname/ IP address
+192.168.29.44
+=====================================================================================
+*sample import*
+=================
+
+*cloudera folks*
+
+hadoop dfsadmin -safemode leave
+
+===================
+*Go to mysql*
+===================
+
+
+mysql -uroot -pcloudera
+
+
+
+===================
+*Create database first and use it*
+===================
+
+create database if not exists zeyodb;
+use zeyodb;
+
+===================
+*create table*
+===================
+
+
+drop table if exists zeyotab;
+create table zeyotab(id int,name varchar(100),city varchar(100));
+===================
+*insert data to the data*
+===================
+
+
+insert into zeyotab values(1,'sai','chennai');
+insert into zeyotab values(2,'ravi','hyderabad');
+insert into zeyotab values(3,'rani','chennai');
+insert into zeyotab values(4,'vasu','bangalore');
+
+===================
+*query and check the data*
+===================
+
+
+select * from zeyotab;
+
+===================
+*come out of mysql*
+===================
+
+quit;
+
+
+===================
+*Execute sqoop command*
+===================
+
+
+sqoop import --connect jdbc:mysql://localhost:3306/zeyodb --username root --password cloudera --m 1 --table zeyotab --delete-target-dir --target-dir /user/cloudera/firstimport
+
+===================
+*validate the data*
+===================
+
+
+hadoop   fs   -ls     /user/cloudera/firstimport
+hadoop   fs   -cat    /user/cloudera/firstimport/part-m-00000
+===========================================================================================================================
+=================
+where imports
+=================
+
+cloudera folks
+
+hadoop dfsadmin -safemode leave
+
+
+===================
+Create  the data and quit
+====================
+
+
+mysql -uroot -pcloudera
+
+create database if not exists zeyodb;
+use zeyodb;
+drop table if exists zeyotab;
+create table zeyotab(id int,name varchar(100),city varchar(100));
+insert into zeyotab values(1,'sai','chennai');
+insert into zeyotab values(2,'ravi','hyderabad');
+insert into zeyotab values(3,'rani','chennai');
+insert into zeyotab values(4,'vasu','bangalore');
+
+select * from zeyotab;
+
+quit;
+
+
+
+===================
+Execute sqoop command with Chennai city
+===================
+
+sqoop import --connect jdbc:mysql://localhost/zeyodb --username root --password cloudera --m 1 --table zeyotab --delete-target-dir --target-dir /user/cloudera/chennaimport --where "city='chennai'"
+
+===================
+Validate the data
+===================
+
+hadoop   fs   -ls     /user/cloudera/chennaimport
+hadoop   fs   -cat    /user/cloudera/chennaimport/part-m-00000
+================================================================================
+=================
+query imports
+=================
+
+cloudera folks
+
+hadoop dfsadmin -safemode leave
+
+mysql -uroot -pcloudera
+
+
+create database if not exists zeyodb;
+use zeyodb;
+drop table if exists zeyotab;
+create table zeyotab(id int,name varchar(100),city varchar(100));
+insert into zeyotab values(1,'sai','chennai');
+insert into zeyotab values(2,'ravi','hyderabad');
+insert into zeyotab values(3,'rani','chennai');
+insert into zeyotab values(4,'vasu','bangalore');
+
+drop table if exists zeyoprod;
+create table zeyoprod(id int,product varchar(100));
+
+insert into zeyoprod values(1,'mobile');
+insert into zeyoprod values(2,'laptop');
+insert into zeyoprod values(3,'mouse');
+insert into zeyoprod values(4,'water');
+
+
+select * from zeyotab;
+select * from zeyoprod;
+
+select a.*,b.product from zeyotab a join zeyoprod b on a.id=b.id;
+
+
+===================
+Comeout of SQL
+===================
+
+
+quit;
+
+
+===================
+Execute sqoop query import
+===================
+
+
+sqoop import --connect jdbc:mysql://localhost/zeyodb --username root --password cloudera --m 1 --delete-target-dir --target-dir /user/cloudera/queryimport --query "select a.*,b.product from zeyotab a join zeyoprod b on a.id=b.id where \$CONDITIONS"
+
+hadoop   fs   -ls     /user/cloudera/queryimport
+hadoop   fs   -cat    /user/cloudera/queryimport/part-m-00000
+======================================================================================================================================
+===================
+Incremental Import-- Clouder
+===================
+
+
+hadoop dfsadmin -safemode leave
+
+===================
+Go to mysql
+===================
+
+mysql -uroot -pcloudera
+
+===================
+Create database first and use it
+===================
+
+create database if not exists zeyodb;
+use zeyodb;
+
+===================
+create table
+===================
+
+drop table if exists zeyotab;
+create table zeyotab(id int,name varchar(100),city varchar(100));
+
+===================
+insert data to the data
+===================
+
+
+insert into zeyotab values(1,'sai','chennai');
+insert into zeyotab values(2,'ravi','hyderabad');
+insert into zeyotab values(3,'rani','chennai');
+insert into zeyotab values(4,'vasu','bangalore');
+
+
+===================
+query and check the data
+===================
+
+
+select * from zeyotab;
+
+===================
+come out of mysql
+===================
+
+quit;
+
+
+===================
+Execute sqoop command
+===================
+
+
+sqoop import --connect jdbc:mysql://localhost/zeyodb --username root --password cloudera --m 1 --table zeyotab --delete-target-dir --target-dir /user/cloudera/increimport
+
+
+
+===================
+validate the data
+===================
+
+
+hadoop   fs   -ls     /user/cloudera/increimport
+hadoop   fs   -cat    /user/cloudera/increimport/part-m-00000
+
+
+
+===================
+Go to mysql AGAIN TO PUT SOME DATA
+===================
+
+mysql -uroot -pcloudera
+
+
+===================
+insert data to the data
+===================
+
+use zeyodb;
+insert into zeyotab values(5,'raj','chennai');
+insert into zeyotab values(6,'vasu','hyderabad');
+
+
+
+===================
+come out of mysql
+===================
+
+quit;
+
+===================
+Execute INCREMENTAL sqoop command
+===================
+
+
+sqoop import --connect jdbc:mysql://localhost/zeyodb --username root --password cloudera --m 1 --table zeyotab  --target-dir /user/cloudera/increimport --incremental append --check-column id --last-value 4
+
+
+===================
+validate the data
+===================
+
+
+hadoop   fs   -ls     /user/cloudera/increimport
+hadoop   fs   -cat    /user/cloudera/increimport/part-m-00001
+===================================================================================================================================
+What is record container class in Sqoop ?
+
+Record Container Class is a class generated by Sqoop. 
+It is used to import data from relational databases such as MySQL, Oracle to Hadoop HDFS, and export from Hadoop file system to relational databases.
+The target table in the database should be created manually, as Sqoop does not automatically create it. 
+Sqoop assumes input records are newline delimited by default
+==========================================================================================================
+What are the different file formats used in Hadoop ?
+
+Text format: 
+Key-Value format: 
+Sequence format: 
+Avro: 
+Parquet: 
+=============================================================================================================
+
+=========
+*Cloudera Incremental Job*
+=========
+
+
+hadoop dfsadmin -safemode leave
+
+
+============
+*Create data in mysql*
+============
+
+mysql -uroot -pcloudera
+
+create database if not exists zeyodb;
+use zeyodb;
+drop table custjob;
+create table custjob(id int,name varchar(100),location varchar(100));
+insert into custjob values(1,'hema','chennai');
+insert into custjob values(2,'ravi','chennai');
+insert into custjob values(3,'raj','hyderabad');
+insert into custjob values(4,'vishnu','Bangalore');
+select * from custjob;
+
+============
+quittt
+============
+
+quit;
+
+============
+*Create a password file and Sqoop Job*
+============
+
+cd
+echo -n cloudera>pfile
+
+sqoop job --delete incre
+sqoop job --create incre -- import --connect jdbc:mysql://localhost/zeyodb --username root --password-file file:///home/cloudera/pfile --table custjob --m 1 --target-dir /user/cloudera/jobdir --incremental append --check-column id --last-value 0
+
+sqoop job --show incre
+sqoop job --exec incre
+
+hadoop fs -ls /user/cloudera/jobdir
+hadoop fs -cat /user/cloudera/jobdir/part-m-00000
+
+
+
+
+
+============
+*Add data in mysql and validate*
+============
+
+
+mysql -uroot -pcloudera
+
+use zeyodb;
+insert into custjob values(5,'riyaz','Pune');
+insert into custjob values(6,'venu','chennai');
+select * from custjob;
+
+
+======
+*quit*
+======
+
+quit;
+
+
+======
+*Execute the Job again and validate data*
+======
+
+sqoop job --exec incre
+
+hadoop fs -ls /user/cloudera/jobdir
+hadoop fs -cat /user/cloudera/jobdir/part-m-00001
+============================================================
+To see where is the last value
+
+Cloudera Folks
+
+cat /home/cloudera/.sqoop/metastore.db.script | grep 'last.value'
+==================================================================
+default mapper is 4 ; if we wont give any mappers by default it takes 4 mappers.
+===========================================================================================================================================
+Task 1--- What is a predicate pushdown ?
+
+Predicate pushdown is a technique used in database management systems to optimize the performance of queries. 
+It involves pushing down the filtering predicates (conditions that return true or false) in a query to the data source. 
+This optimization can drastically reduce query/processing time by filtering out data earlier rather than later.
+
+
+Task 2--- What is speculative execution  in Hadoop ?
+
+Speculative execution is a feature in Hadoop MapReduce that helps improve job efficiency by detecting 
+when a task is running slower than expected and launching another equivalent task as a backup, called a speculative task.
+ This process is called speculative execution  
+
+
+Task 3 --- What are the advantages of Columnar file format ?
+
+Columnar file format is a data storage technique that organizes and stores data by columns.
+ It is used for data warehousing and big data analytics, 
+where fast query performance and efficient data compression are essential . 
+Here are some of the advantages of using columnar file format:
+
+Data compression: Columnar-oriented databases allow for better data compression ratios compared to row-oriented databases.
+
+Query performance: In columnar data storage, the database engine can read and process only the necessary columns, 
+which results in faster query performance.
+
+Scalability: Columnar file format is highly scalable and can handle large datasets and complex analytical queries
+==================================================================================================================
+Task 1
+* Schema-on-read provides scalability and flexibility to apply any analytical operations, 
+  schema-on-write helps to model a structured data model, 
+  thereby enabling faster reads based on a predefined schema.
+  Schema-on-read provides much needed flexibility to an analytical project.
+===================================================================================================================
+Task 1: What Makes avro Schema Evoluted ?
+Avro schema evolution: Schema evolution is the automatic transformation of Avro schema. 
+This transformation is between the version of the schema that the client is using (its local copy), 
+and what is currently contained in the store.
